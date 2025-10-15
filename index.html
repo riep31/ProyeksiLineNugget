@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Proyeksi Line Nuget</title>
+  
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.dataTables.min.css">
+  
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  
+  <!-- DataTables JS -->
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
+  
+  <style>
+    body { 
+      font-family:'Inter', 'Segoe UI', Tahoma, sans-serif; 
+      margin:0; 
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height:100vh;
+    }
+
+    header {
+      display:flex; 
+      align-items:center; 
+      justify-content:flex-start;
+      background: linear-gradient(90deg, #f2f9ff 20%, #4949f5 100%);
+      padding:20px 20px; 
+      color:#2c3e50; 
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 10px;
+      gap: 40px;
+      border-bottom: 1px solid rgba(52, 73, 94, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .logo { 
+      display:flex; 
+      align-items:center; 
+      flex-shrink:0; 
+    }
+    
+    .logo img { 
+      width:110px; 
+      height:55px; 
+      margin-right:20px; 
+      border-radius:12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    
+    .logo img:hover {
+      transform: scale(1.05);
+    }
+    
+    .logo-text { 
+      display:flex; 
+      flex-direction:column; 
+      line-height:1.3; 
+    }
+    
+    .logo-text strong { 
+      font-size:22px; 
+      color:#2c3e50;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    .logo-text span { 
+      font-size:15px; 
+      opacity:0.8; 
+      color:#6c757d;
+      font-weight: 400;
+    }
+    
+    .controls { 
+      display:flex; 
+      gap:10px; 
+      align-items:center; 
+      flex-wrap:wrap; 
+      margin-left: auto;
+    }
+    
+    .status { 
+      display:flex; 
+      align-items:center; 
+      font-size:12px; 
+      margin-left:15px; 
+    }
+    
+    .status span { 
+      width:10px; 
+      height:10px; 
+      border-radius:50%; 
+      display:inline-block; 
+      margin-right:6px; 
+    }
+    
+    .connected{background:#2ecc71;} 
+    .disconnected{background:#e74c3c;} 
+    .loading{background:#f1c40f;}
+
+    .filters{
+      margin:0 10px 5px 10px;
+      display:flex;
+      gap:40px;
+      flex-wrap:wrap;
+      align-items:center;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 12px 21px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    select{
+      padding:15px 18px;
+      border-radius:12px;
+      background: rgba(255, 255, 255, 0.9);
+      border:2px solid rgba(52, 73, 94, 0.1);
+      font-size:15px;
+      min-width:180px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 4px rgba(52,152,219,0.2);
+      transform: translateY(-2px);
+    }
+
+    /* ===========================
+       TABLE CONTAINER
+       =========================== */
+    .table-container {
+      margin: 0 10px 30px 10px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 21px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* ===========================
+       DATATABLE BASE STYLING
+       =========================== */
+    #sheetTable {
+  width: 100% !important;
+  font-size: 14px !important;
+  margin: 0 !important;
+  border-collapse: collapse !important;
+}
+
+     /* ===========================
+       TABLE BODY STYLING
+       =========================== */
+    #sheetTable tbody tr {
+  background: transparent !important;
+}
+
+#sheetTable tbody td {
+  padding: 14px 12px !important;
+  border: 1px solid rgba(52, 73, 94, 0.08) !important;
+  color: #2c3e50 !important;
+  font-size: 14px !important;
+  vertical-align: middle !important;
+  font-weight: normal !important;
+  text-transform: none !important;
+}
+
+    /* Zebra striping */
+    #sheetTable tbody tr:nth-child(odd) {
+  background: #ffffff !important;
+}
+
+#sheetTable tbody tr:nth-child(even) {
+  background: rgba(248, 249, 250, 0.8) !important;
+}
+
+    /* Hover effect */
+    #sheetTable tbody tr:hover {
+  background: rgba(52, 152, 219, 0.15) !important;
+  transition: background 0.2s ease;
+}
+    /* Selected row */
+   #sheetTable tbody tr.selected {
+  background: rgba(52, 152, 219, 0.3) !important;
+}
+    
+    /* Pastikan fixed columns tidak overlap dengan scroll */
+    .dataTables_scrollBody {
+      overflow: auto !important;
+    }
+
+    .dtfc-fixed-left,
+    .dtfc-fixed-right {
+      z-index: 2;
+    }
+
+    /* ===========================
+       DATATABLES WRAPPER
+       =========================== */
+    .dataTables_wrapper {
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Top controls spacing */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+      margin-bottom: 15px;
+    }
+
+    /* Search and length inputs */
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 2px solid rgba(52, 73, 94, 0.1);
+      background: rgba(255, 255, 255, 0.95);
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .dataTables_wrapper .dataTables_filter input:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    }
+
+    /* Bottom info and pagination */
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #5a6c7d;
+    }
+
+    /* ===========================
+       PAGINATION STYLING
+       =========================== */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      padding: 8px 14px;
+      margin: 0 3px;
+      border-radius: 6px;
+      border: 1px solid rgba(52, 73, 94, 0.15);
+      background: #ffffff;
+      color: #2c3e50 !important;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background: #3498db !important;
+      color: #ffffff !important;
+      border-color: #3498db !important;
+      transform: translateY(-1px);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+      background: #2c3e50 !important;
+      color: #ffffff !important;
+      border-color: #2c3e50 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+      background: #ffffff !important;
+      color: #2c3e50 !important;
+      transform: none;
+    }
+
+    /* ===========================
+       EXPORT BUTTONS STYLING
+       =========================== */
+    .dt-buttons {
+      margin-bottom: 15px;
+      display: inline-block;
+    }
+
+    .dt-button {
+      padding: 10px 20px !important;
+      border: none !important;
+      border-radius: 10px !important;
+      cursor: pointer !important;
+      font-size: 14px !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+      margin-right: 8px !important;
+      margin-bottom: 5px !important;
+      transition: all 0.3s ease !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .dt-button:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .dt-button:active {
+      transform: translateY(0) !important;
+    }
+
+    /* Button colors */
+    .buttons-copy {
+      background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%) !important;
+    }
+
+    .buttons-excel {
+      background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%) !important;
+    }
+
+    .buttons-csv {
+      background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%) !important;
+    }
+
+    .buttons-pdf {
+      background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%) !important;
+    }
+
+    .buttons-print {
+      background: linear-gradient(135deg, #2980b9 0%, #3498db 100%) !important;
+    }
+
+    /* ===========================
+       SCROLLBAR STYLING
+       =========================== */
+    .dataTables_scrollBody::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .dataTables_scrollBody::-webkit-scrollbar-track {
+      background: rgba(52, 73, 94, 0.05);
+      border-radius: 5px;
+    }
+
+    .dataTables_scrollBody::-webkit-scrollbar-thumb {
+      background: rgba(52, 73, 94, 0.3);
+      border-radius: 5px;
+    }
+
+    .dataTables_scrollBody::-webkit-scrollbar-thumb:hover {
+      background: rgba(52, 73, 94, 0.5);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .filters {
+        flex-direction: column;
+      }
+      
+      select {
+        min-width: 100%;
+      }
+      
+      .controls {
+        flex-wrap: wrap;
+      }
+      
+      .logo-text strong {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main" id="main">
+    <header>
+      <div class="logo">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYyanHkNjy-MEGWx-yRWA8XiFF9HbWiLoGFY9HRkEpuBXKYGjxU_TMW2dK4ONcqKA4tg&usqp=CAU">
+        <div class="logo-text">
+          <strong>Proyeksi Line Nuget</strong>
+          <span>Data Proyeksi Line Nuget</span>
+        </div>
+      </div>
+      <div class="controls">
+        <div id="dateTimeDisplay" style="font-size: 14px; font-weight: 600; color: #2c3e50; margin-right: 20px;"></div>
+        <div class="status" id="status">
+          <span class="disconnected"></span><span id="statusText">Disconnected</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filters -->
+    <div class="filters">
+      <select id="filterB" onchange="applyFilters()"><option value="">-- Filter Tanggal OKP --</option></select>
+      <select id="filterG" onchange="applyFilters()"><option value="">-- Filter Nama Sampel --</option></select>
+    </div>
+
+    <!-- Main Table -->
+    <div class="table-container">
+      <table id="sheetTable" class="display nowrap" style="width:100%">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+// Google Sheets API Configuration
+let apiKey = 'AIzaSyD3nhZyvd7npQw6n9mPXxOA6svJdo_JQis';
+let spreadsheetId = '1ngP7PTE4mNKtkcTQU5sRYswdYmdC401M4ioxxkt-Hxw';
+let sheetName = 'PROYEKSI_LINE_NUGET';
+
+let allRows = [];
+let dataTable = null;
+
+// Google Sheets API function to fetch data
+async function fetchSheetData(sheetNameParam) {
+  if (!apiKey || !spreadsheetId) {
+    throw new Error('API key or spreadsheet ID not configured');
+  }
+  
+  const range = `${sheetNameParam}!A:Z`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
+  
+  const response = await fetch(url);
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`Google Sheets API Error: ${errorData.error?.message || response.statusText}`);
+  }
+  
+  const data = await response.json();
+  return data.values || [];
+}
+
+async function loadSheet(){
+  if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+    setStatus("disconnected", "API Key belum dikonfigurasi");
+    return;
+  }
+  
+  setStatus("loading","Loading...");
+  try{
+    const mainSheetData = await fetchSheetData(sheetName);
+    allRows = mainSheetData;
+    
+    if (allRows.length > 0) {
+      renderTable(allRows);
+      fillFilters(allRows);
+    }
+    
+    setStatus("connected","Connected");
+  } catch(error) {
+    console.error('Error loading sheet:', error);
+    setStatus("disconnected","Error: " + error.message);
+  }
+}
+
+// Fungsi untuk format tanggal dari Google Sheets (DD/MM/YYYY)
+function formatDateFromGoogleSheets(dateStr) {
+  if (!dateStr) return '';
+  
+  dateStr = dateStr.toString().trim();
+  
+  // Jika sudah dalam format DD/MM/YYYY, kembalikan dengan padding
+  const slashPattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+  const match = dateStr.match(slashPattern);
+  
+  if (match) {
+    const day = match[1].padStart(2, '0');
+    const month = match[2].padStart(2, '0');
+    const year = match[3];
+    
+    return `${day}/${month}/${year}`;
+  }
+  
+  return dateStr;
+}
+
+// Plugin untuk sorting tanggal DD/MM/YYYY di DataTables
+$.fn.dataTable.ext.type.order['date-dd-mm-yyyy-pre'] = function(d) {
+  if (!d || d === '') return 0;
+  
+  const match = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (match) {
+    // Konversi DD/MM/YYYY ke YYYYMMDD untuk sorting
+    return parseInt(match[3] + match[2] + match[1]);
+  }
+  return 0;
+};
+
+// Deteksi otomatis kolom tanggal
+$.fn.dataTable.ext.type.detect.unshift(function(d) {
+  if (d && typeof d === 'string') {
+    const match = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (match) {
+      return 'date-dd-mm-yyyy';
+    }
+  }
+  return null;
+});
+
+function renderTable(rows){
+  if(rows.length === 0) return;
+  
+  // Debug: Log struktur data
+  console.log('Total rows dari Google Sheets:', rows.length);
+  console.log('Row 0 (Header):', rows[0]);
+  console.log('Row 1:', rows[1]);
+  console.log('Row 2:', rows[2]);
+  
+  let thead = document.querySelector("#sheetTable thead");
+  let tbody = document.querySelector("#sheetTable tbody");
+  
+  // Clear existing content
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
+  
+  // Create header dari row 0
+  let headerRow = document.createElement("tr");
+  rows[0].forEach(h => {
+    let th = document.createElement("th");
+    th.textContent = h;
+    th.style.backgroundColor = "#2c3e50";
+    th.style.color = "#ffffff";
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  
+  // Create body rows - mulai dari row 1, FILTER row yang kosong dan format tanggal
+  let validRowCount = 0;
+  rows.slice(1).forEach((r, rowIndex) => {
+    // Cek apakah row memiliki data (bukan semua cell kosong)
+    const hasData = r.some(cell => cell && cell.toString().trim() !== '');
+    
+    if (hasData) {
+      validRowCount++;
+      let tr = document.createElement("tr");
+      rows[0].forEach((_, i) => {
+        let td = document.createElement("td");
+        let cellValue = r[i] || '';
+        
+        // Format tanggal untuk kolom A (index 0) dan B (index 1)
+        if ((i === 0 || i === 1) && cellValue) {
+          cellValue = formatDateFromGoogleSheets(cellValue);
+        }
+        
+        td.textContent = cellValue;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    } else {
+      console.log(`Row ${rowIndex + 1} dilewati karena kosong:`, r);
+    }
+  });
+  
+  console.log('Total rows valid yang ditampilkan:', validRowCount);
+  
+  // Destroy existing DataTable if exists
+  if (dataTable) {
+    dataTable.destroy();
+  }
+  
+  // Initialize DataTables - NONAKTIFKAN fixedColumns
+  dataTable = $('#sheetTable').DataTable({
+    dom: 'Blfrtip',
+    buttons: [
+      {
+        extend: 'copy',
+        text: '📋 Copy',
+        className: 'buttons-copy'
+      },
+      {
+        extend: 'excel',
+        text: '📊 Excel',
+        className: 'buttons-excel',
+        filename: 'proyeksi_line_nuget',
+        exportOptions: {
+          format: {
+            body: function(data, row, column, node) {
+              return data;
+            }
+          }
+        }
+      },
+      {
+        extend: 'csv',
+        text: '📄 CSV',
+        className: 'buttons-csv',
+        filename: 'proyeksi_line_nuget',
+        exportOptions: {
+          format: {
+            body: function(data, row, column, node) {
+              return data;
+            }
+          }
+        }
+      },
+      {
+        extend: 'pdf',
+        text: '📕 PDF',
+        className: 'buttons-pdf',
+        filename: 'proyeksi_line_nuget',
+        orientation: 'landscape',
+        pageSize: 'A4'
+      },
+      {
+        extend: 'print',
+        text: '🖨 Print',
+        className: 'buttons-print'
+      }
+    ],
+    scrollX: true,
+    scrollY: '500px',
+    scrollCollapse: true,
+    paging: true,
+    pageLength: 25,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+    language: {
+      search: "🔍 Pencarian:",
+      lengthMenu: "Tampilkan _MENU_ data per halaman",
+      info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+      infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
+      infoFiltered: "(difilter dari _MAX_ total data)",
+      paginate: {
+        first: "Pertama",
+        last: "Terakhir",
+        next: "Selanjutnya",
+        previous: "Sebelumnya"
+      },
+      zeroRecords: "Tidak ada data yang ditemukan",
+      emptyTable: "Tidak ada data tersedia"
+    },
+    columnDefs: [
+      {
+        targets: [0, 1], // Kolom A dan B (index 0 dan 1)
+        type: 'date-dd-mm-yyyy' // Gunakan sorting khusus untuk tanggal DD/MM/YYYY
+      }
+    ],
+    order: [[0, 'asc']], // Sort kolom pertama (tanggal) secara ascending
+    select: true
+  });
+}
+
+function applyFilters(){
+  if (!dataTable) return;
+  
+  let fB = document.getElementById("filterB").value;
+  let fG = document.getElementById("filterG").value;
+  
+  // Get column indices for B and G (assuming B=1, G=6 in 0-based index)
+  let colB = 1;
+  let colG = 6;
+  
+  // Apply filters
+  dataTable
+    .column(colB).search(fB)
+    .column(colG).search(fG)
+    .draw();
+}
+
+function fillFilters(rows){
+  if (rows.length === 0) return;
+  
+  // Fill filter for column B (index 1) - Tanggal OKP
+  let sB = document.getElementById("filterB");
+  sB.innerHTML = "<option value=''>-- Semua Tanggal OKP --</option>";
+  let valsB = [...new Set(rows.slice(1).map(r => r[1] ? formatDateFromGoogleSheets(r[1]) : ''))].filter(v => v);
+  
+  // Sort tanggal dengan benar (DD/MM/YYYY)
+  valsB.sort((a, b) => {
+    // Konversi DD/MM/YYYY ke YYYYMMDD untuk perbandingan
+    const dateA = a.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    const dateB = b.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    
+    if (dateA && dateB) {
+      const numA = parseInt(dateA[3] + dateA[2] + dateA[1]); // YYYYMMDD
+      const numB = parseInt(dateB[3] + dateB[2] + dateB[1]); // YYYYMMDD
+      return numA - numB; // Ascending
+    }
+    
+    return a.localeCompare(b); // Fallback untuk string biasa
+  });
+  
+  valsB.forEach(v => {
+    let o = document.createElement("option");
+    o.value = v;
+    o.textContent = v;
+    sB.appendChild(o);
+  });
+  
+  // Fill filter for column G (index 6) - Nama Sampel
+  let sG = document.getElementById("filterG");
+  sG.innerHTML = "<option value=''>-- Semua Nama Sampel --</option>";
+  let valsG = [...new Set(rows.slice(1).map(r => r[6]))].filter(v => v);
+  valsG.sort(); // Sort alfabetis untuk nama sampel
+  valsG.forEach(v => {
+    let o = document.createElement("option");
+    o.value = v;
+    o.textContent = v;
+    sG.appendChild(o);
+  });
+}
+
+function updateDateTime() {
+  const now = new Date();
+  
+  // Indonesian day names
+  const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  
+  // Indonesian month names
+  const monthNames = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+  
+  const dayName = dayNames[now.getDay()];
+  const day = now.getDate();
+  const month = monthNames[now.getMonth()];
+  const year = now.getFullYear();
+  
+  // Format time with leading zeros
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  
+  const dateTimeString = `📅 ${dayName}, ${day} ${month} ${year} |  ${hours}:${minutes}:${seconds}`;
+  
+  document.getElementById('dateTimeDisplay').innerHTML = dateTimeString;
+}
+
+function setStatus(st, t){ 
+  let span = document.querySelector("#status span"); 
+  span.className = st === "connected" ? "connected" : st === "loading" ? "loading" : "disconnected"; 
+  document.getElementById("statusText").textContent = t; 
+}
+
+// Initialize page when DOM is loaded
+$(document).ready(function() {
+  // Update date time immediately and then every second
+  updateDateTime();
+  setInterval(updateDateTime, 1000);
+  
+  loadSheet();
+});
+</script>
+</body>
+</html>
