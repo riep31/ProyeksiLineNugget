@@ -4,23 +4,17 @@
   <meta charset="UTF-8">
   <title>Proyeksi Line Nuget</title>
   
-  <!-- DataTables CSS -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.dataTables.min.css">
+  <!-- Grid.js CSS -->
+  <link href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
   
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <!-- Grid.js JS -->
+  <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
   
-  <!-- DataTables JS -->
-  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-  <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
+  <!-- XLSX untuk export Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- Chart.js untuk Line Chart -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   
   <style>
     body { 
@@ -111,25 +105,28 @@
     .loading{background:#f1c40f;}
 
     .filters{
-      margin:0 10px 5px 10px;
       display:flex;
-      gap:40px;
+      gap:20px;
       flex-wrap:wrap;
       align-items:center;
-      background: rgba(255, 255, 255, 0.7);
-      padding: 12px 21px;
-      border-radius: 15px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 15px 20px;
+      border-bottom: 2px solid rgba(52, 73, 94, 0.1);
+      margin-bottom: 0;
+    }
+    
+    .filters label {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 14px;
     }
     
     select{
-      padding:15px 18px;
-      border-radius:12px;
+      padding:10px 15px;
+      border-radius:8px;
       background: rgba(255, 255, 255, 0.9);
       border:2px solid rgba(52, 73, 94, 0.1);
-      font-size:15px;
+      font-size:14px;
       min-width:180px;
       font-weight: 500;
       transition: all 0.3s ease;
@@ -141,6 +138,94 @@
       border-color: #3498db;
       box-shadow: 0 0 0 4px rgba(52,152,219,0.2);
       transform: translateY(-2px);
+    }
+
+    input[type="date"] {
+      padding:10px 15px;
+      border-radius:8px;
+      background: rgba(255, 255, 255, 0.9);
+      border:2px solid rgba(52, 73, 94, 0.1);
+      font-size:14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    input[type="date"]:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 4px rgba(52,152,219,0.2);
+      transform: translateY(-2px);
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 0;
+      margin: 0;
+    }
+
+    .action-buttons button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .action-buttons button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .action-buttons button:active {
+      transform: translateY(0);
+    }
+
+    #excelBtn {
+      background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    }
+
+    #printBtn {
+      background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+    }
+
+    #resetBtn {
+      background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+    }
+
+    #toggleChartBtn {
+      background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
+    }
+
+    /* ===========================
+       CHART CONTAINER
+       =========================== */
+    .chart-container {
+      margin: 0 10px 15px 10px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 21px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: none;
+    }
+
+    .chart-container.show {
+      display: block;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      height: 400px;
+      width: 100%;
     }
 
     /* ===========================
@@ -156,211 +241,106 @@
       border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
-    /* ===========================
-       DATATABLE BASE STYLING
-       =========================== */
-    #sheetTable {
-  width: 100% !important;
-  font-size: 14px !important;
-  margin: 0 !important;
-  border-collapse: collapse !important;
-}
-
-     /* ===========================
-       TABLE BODY STYLING
-       =========================== */
-    #sheetTable tbody tr {
-  background: transparent !important;
-}
-
-#sheetTable tbody td {
-  padding: 14px 12px !important;
-  border: 1px solid rgba(52, 73, 94, 0.08) !important;
-  color: #2c3e50 !important;
-  font-size: 14px !important;
-  vertical-align: middle !important;
-  font-weight: normal !important;
-  text-transform: none !important;
-}
-
-    /* Zebra striping */
-    #sheetTable tbody tr:nth-child(odd) {
-  background: #ffffff !important;
-}
-
-#sheetTable tbody tr:nth-child(even) {
-  background: rgba(248, 249, 250, 0.8) !important;
-}
-
-    /* Hover effect */
-    #sheetTable tbody tr:hover {
-  background: rgba(52, 152, 219, 0.15) !important;
-  transition: background 0.2s ease;
-}
-    /* Selected row */
-   #sheetTable tbody tr.selected {
-  background: rgba(52, 152, 219, 0.3) !important;
-}
-    
-    /* Pastikan fixed columns tidak overlap dengan scroll */
-    .dataTables_scrollBody {
-      overflow: auto !important;
-    }
-
-    .dtfc-fixed-left,
-    .dtfc-fixed-right {
-      z-index: 2;
-    }
-
-    /* ===========================
-       DATATABLES WRAPPER
-       =========================== */
-    .dataTables_wrapper {
-      padding: 0;
-      margin: 0;
-    }
-
-    /* Top controls spacing */
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-      margin-bottom: 15px;
-    }
-
-    /* Search and length inputs */
-    .dataTables_wrapper .dataTables_length select,
-    .dataTables_wrapper .dataTables_filter input {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 2px solid rgba(52, 73, 94, 0.1);
-      background: rgba(255, 255, 255, 0.95);
-      font-size: 14px;
-      transition: all 0.2s ease;
-    }
-
-    .dataTables_wrapper .dataTables_filter input:focus {
-      outline: none;
-      border-color: #3498db;
-      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
-    }
-
-    /* Bottom info and pagination */
-    .dataTables_wrapper .dataTables_info,
-    .dataTables_wrapper .dataTables_paginate {
-      margin-top: 15px;
-      font-size: 14px;
-      color: #5a6c7d;
-    }
-
-    /* ===========================
-       PAGINATION STYLING
-       =========================== */
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-      padding: 8px 14px;
-      margin: 0 3px;
+    /* Grid.js Custom Styling - sama seperti Tabel 1 */
+    .gridjs-container {
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
       border-radius: 6px;
-      border: 1px solid rgba(52, 73, 94, 0.15);
-      background: #ffffff;
-      color: #2c3e50 !important;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      background: white;
+      max-width: 100%;
+      overflow: visible;
+      height: auto;
+      position: relative;
+    }
+    
+    .gridjs-wrapper {
+      max-height: 60vh;
+      overflow-y: auto;
+      overflow-x: auto;
+      position: relative;
     }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-      background: #3498db !important;
-      color: #ffffff !important;
-      border-color: #3498db !important;
-      transform: translateY(-1px);
+    table.gridjs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      table-layout: fixed;
     }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-      background: #2c3e50 !important;
-      color: #ffffff !important;
-      border-color: #2c3e50 !important;
+    thead.gridjs-thead {
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
+    thead.gridjs-thead th.gridjs-th {
+      background-color: #1565c0 !important;
+      color: white !important;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap !important;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default !important;
+      border: 1px solid #0d47a1 !important;
     }
 
-    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
-      background: #ffffff !important;
-      color: #2c3e50 !important;
-      transform: none;
+    /* Tooltip pada header */
+    thead.gridjs-thead th.gridjs-th:hover::after {
+      content: attr(title);
+      position: absolute;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      padding: 5px 8px;
+      border-radius: 4px;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      z-index: 10;
+      font-size: 10px;
+      pointer-events: none;
     }
 
-    /* ===========================
-       EXPORT BUTTONS STYLING
-       =========================== */
-    .dt-buttons {
-      margin-bottom: 15px;
-      display: inline-block;
+    tbody.gridjs-tbody tr:nth-child(even) td.gridjs-td {
+      background-color: #e3f2fd !important;
     }
 
-    .dt-button {
-      padding: 10px 20px !important;
-      border: none !important;
-      border-radius: 10px !important;
-      cursor: pointer !important;
-      font-size: 14px !important;
-      color: #ffffff !important;
-      font-weight: 600 !important;
-      margin-right: 8px !important;
-      margin-bottom: 5px !important;
-      transition: all 0.3s ease !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    tbody.gridjs-tbody tr:nth-child(odd) td.gridjs-td {
+      background-color: #ffffff !important;
     }
 
-    .dt-button:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
+    tbody.gridjs-tbody tr:hover td.gridjs-td {
+      background-color: #c8e6c9 !important;
+      transition: 0.2s;
     }
 
-    .dt-button:active {
-      transform: translateY(0) !important;
+    td.gridjs-td {
+      border: 1.5px solid #90a4ae !important;
+      padding: 6px;
+      text-align: center;
+      vertical-align: middle;
     }
 
-    /* Button colors */
-    .buttons-copy {
-      background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%) !important;
-    }
-
-    .buttons-excel {
-      background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%) !important;
-    }
-
-    .buttons-csv {
-      background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%) !important;
-    }
-
-    .buttons-pdf {
-      background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%) !important;
-    }
-
-    .buttons-print {
-      background: linear-gradient(135deg, #2980b9 0%, #3498db 100%) !important;
-    }
-
-    /* ===========================
-       SCROLLBAR STYLING
-       =========================== */
-    .dataTables_scrollBody::-webkit-scrollbar {
+    /* Scrollbar styling untuk gridjs-wrapper */
+    .gridjs-wrapper::-webkit-scrollbar {
       width: 10px;
       height: 10px;
     }
 
-    .dataTables_scrollBody::-webkit-scrollbar-track {
+    .gridjs-wrapper::-webkit-scrollbar-track {
       background: rgba(52, 73, 94, 0.05);
       border-radius: 5px;
     }
 
-    .dataTables_scrollBody::-webkit-scrollbar-thumb {
+    .gridjs-wrapper::-webkit-scrollbar-thumb {
       background: rgba(52, 73, 94, 0.3);
       border-radius: 5px;
     }
 
-    .dataTables_scrollBody::-webkit-scrollbar-thumb:hover {
+    .gridjs-wrapper::-webkit-scrollbar-thumb:hover {
       background: rgba(52, 73, 94, 0.5);
     }
 
@@ -370,7 +350,7 @@
         flex-direction: column;
       }
       
-      select {
+      select, input[type="date"] {
         min-width: 100%;
       }
       
@@ -402,18 +382,39 @@
       </div>
     </header>
 
-    <!-- Filters -->
-    <div class="filters">
-      <select id="filterB" onchange="applyFilters()"><option value="">-- Filter Tanggal OKP --</option></select>
-      <select id="filterG" onchange="applyFilters()"><option value="">-- Filter Nama Sampel --</option></select>
+    <!-- Chart Container -->
+    <div class="chart-container" id="chartContainer">
+      <h3 style="margin-top: 0; color: #2c3e50; text-align: center;">📈 Line Chart - Data Kolom K, L, M</h3>
+      <div class="chart-wrapper">
+        <canvas id="lineChart"></canvas>
+      </div>
     </div>
 
-    <!-- Main Table -->
+    <!-- Main Table with Filters Inside -->
     <div class="table-container">
-      <table id="sheetTable" class="display nowrap" style="width:100%">
-        <thead></thead>
-        <tbody></tbody>
-      </table>
+      <!-- Filters -->
+      <div class="filters">
+        <label for="filterBMulai">Tanggal Mulai:</label>
+        <input type="date" id="filterBMulai">
+
+        <label for="filterBSelesai">Tanggal Selesai:</label>
+        <input type="date" id="filterBSelesai">
+
+        <label for="filterG">Nama Sampel:</label>
+        <select id="filterG">
+          <option value="">Semua</option>
+        </select>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button id="toggleChartBtn">📊 Tampilkan Chart</button>
+          <button id="excelBtn">📥 Excel</button>
+          <button id="printBtn">🖨️ Print</button>
+          <button id="resetBtn">🔄 Reset</button>
+        </div>
+      </div>
+
+      <div id="gridTable"></div>
     </div>
   </div>
 
@@ -424,7 +425,10 @@ let spreadsheetId = '1ngP7PTE4mNKtkcTQU5sRYswdYmdC401M4ioxxkt-Hxw';
 let sheetName = 'PROYEKSI_LINE_NUGET';
 
 let allRows = [];
-let dataTable = null;
+let currentData = [];
+let grid;
+let headers = [];
+let myChart = null;
 
 // Google Sheets API function to fetch data
 async function fetchSheetData(sheetNameParam) {
@@ -444,29 +448,6 @@ async function fetchSheetData(sheetNameParam) {
   
   const data = await response.json();
   return data.values || [];
-}
-
-async function loadSheet(){
-  if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-    setStatus("disconnected", "API Key belum dikonfigurasi");
-    return;
-  }
-  
-  setStatus("loading","Loading...");
-  try{
-    const mainSheetData = await fetchSheetData(sheetName);
-    allRows = mainSheetData;
-    
-    if (allRows.length > 0) {
-      renderTable(allRows);
-      fillFilters(allRows);
-    }
-    
-    setStatus("connected","Connected");
-  } catch(error) {
-    console.error('Error loading sheet:', error);
-    setStatus("disconnected","Error: " + error.message);
-  }
 }
 
 // Fungsi untuk format tanggal dari Google Sheets (DD/MM/YYYY)
@@ -490,223 +471,174 @@ function formatDateFromGoogleSheets(dateStr) {
   return dateStr;
 }
 
-// Plugin untuk sorting tanggal DD/MM/YYYY di DataTables
-$.fn.dataTable.ext.type.order['date-dd-mm-yyyy-pre'] = function(d) {
-  if (!d || d === '') return 0;
-  
-  const match = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+// Convert DD/MM/YYYY to YYYY-MM-DD for date input
+function convertToDateInputFormat(dateStr) {
+  if (!dateStr) return '';
+  const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (match) {
-    // Konversi DD/MM/YYYY ke YYYYMMDD untuk sorting
-    return parseInt(match[3] + match[2] + match[1]);
+    return `${match[3]}-${match[2]}-${match[1]}`;
   }
-  return 0;
-};
+  return '';
+}
 
-// Deteksi otomatis kolom tanggal
-$.fn.dataTable.ext.type.detect.unshift(function(d) {
-  if (d && typeof d === 'string') {
-    const match = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (match) {
-      return 'date-dd-mm-yyyy';
-    }
+// Convert YYYY-MM-DD to DD/MM/YYYY
+function convertFromDateInputFormat(dateStr) {
+  if (!dateStr) return '';
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
   }
-  return null;
-});
+  return '';
+}
 
-function renderTable(rows){
-  if(rows.length === 0) return;
+// Compare dates in DD/MM/YYYY format
+function compareDates(date1, date2, operator) {
+  const d1Match = date1.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const d2Match = date2.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   
-  // Debug: Log struktur data
-  console.log('Total rows dari Google Sheets:', rows.length);
-  console.log('Row 0 (Header):', rows[0]);
-  console.log('Row 1:', rows[1]);
-  console.log('Row 2:', rows[2]);
+  if (!d1Match || !d2Match) return false;
   
-  let thead = document.querySelector("#sheetTable thead");
-  let tbody = document.querySelector("#sheetTable tbody");
+  const num1 = parseInt(d1Match[3] + d1Match[2] + d1Match[1]);
+  const num2 = parseInt(d2Match[3] + d2Match[2] + d2Match[1]);
   
-  // Clear existing content
-  thead.innerHTML = "";
-  tbody.innerHTML = "";
-  
-  // Create header dari row 0
-  let headerRow = document.createElement("tr");
-  rows[0].forEach(h => {
-    let th = document.createElement("th");
-    th.textContent = h;
-    th.style.backgroundColor = "#2c3e50";
-    th.style.color = "#ffffff";
-    headerRow.appendChild(th);
+  if (operator === '>=') return num1 >= num2;
+  if (operator === '<=') return num1 <= num2;
+  return false;
+}
+
+// Fungsi tooltip untuk header
+function applyHeaderTooltip() {
+  document.querySelectorAll('.gridjs-thead .gridjs-th').forEach(th => {
+    th.setAttribute('title', th.textContent.trim());
+    th.style.position = 'sticky';
+    th.style.top = '0';
   });
-  thead.appendChild(headerRow);
+}
+
+async function loadSheet(){
+  if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+    setStatus("disconnected", "API Key belum dikonfigurasi");
+    return;
+  }
   
-  // Create body rows - mulai dari row 1, FILTER row yang kosong dan format tanggal
-  let validRowCount = 0;
-  rows.slice(1).forEach((r, rowIndex) => {
-    // Cek apakah row memiliki data (bukan semua cell kosong)
-    const hasData = r.some(cell => cell && cell.toString().trim() !== '');
+  setStatus("loading","Loading...");
+  try{
+    const mainSheetData = await fetchSheetData(sheetName);
     
-    if (hasData) {
-      validRowCount++;
-      let tr = document.createElement("tr");
-      rows[0].forEach((_, i) => {
-        let td = document.createElement("td");
-        let cellValue = r[i] || '';
-        
-        // Format tanggal untuk kolom A (index 0) dan B (index 1)
-        if ((i === 0 || i === 1) && cellValue) {
-          cellValue = formatDateFromGoogleSheets(cellValue);
-        }
-        
-        td.textContent = cellValue;
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    } else {
-      console.log(`Row ${rowIndex + 1} dilewati karena kosong:`, r);
+    if (mainSheetData.length === 0) {
+      setStatus("disconnected", "Tidak ada data");
+      return;
     }
-  });
-  
-  console.log('Total rows valid yang ditampilkan:', validRowCount);
-  
-  // Destroy existing DataTable if exists
-  if (dataTable) {
-    dataTable.destroy();
+    
+    // Ambil header
+    headers = mainSheetData[0];
+    
+    // Ambil dan filter data (skip row kosong)
+    allRows = mainSheetData.slice(1).filter(row => {
+      return row.some(cell => cell && cell.toString().trim() !== '');
+    });
+    
+    // Format tanggal untuk kolom A (index 0) dan B (index 1)
+    allRows = allRows.map(row => {
+      return row.map((cell, i) => {
+        if ((i === 0 || i === 1) && cell) {
+          return formatDateFromGoogleSheets(cell);
+        }
+        return cell || '';
+      });
+    });
+    
+    currentData = [...allRows];
+    
+    console.log('Total rows valid:', allRows.length);
+    
+    renderGrid();
+    fillFilters();
+    // JANGAN update chart di sini, biarkan kosong sampai user klik tombol chart
+    
+    setStatus("connected","Connected");
+  } catch(error) {
+    console.error('Error loading sheet:', error);
+    setStatus("disconnected","Error: " + error.message);
   }
-  
-  // Initialize DataTables - NONAKTIFKAN fixedColumns
-  dataTable = $('#sheetTable').DataTable({
-    dom: 'Blfrtip',
-    buttons: [
-      {
-        extend: 'copy',
-        text: '📋 Copy',
-        className: 'buttons-copy'
-      },
-      {
-        extend: 'excel',
-        text: '📊 Excel',
-        className: 'buttons-excel',
-        filename: 'proyeksi_line_nuget',
-        exportOptions: {
-          format: {
-            body: function(data, row, column, node) {
-              return data;
-            }
-          }
-        }
-      },
-      {
-        extend: 'csv',
-        text: '📄 CSV',
-        className: 'buttons-csv',
-        filename: 'proyeksi_line_nuget',
-        exportOptions: {
-          format: {
-            body: function(data, row, column, node) {
-              return data;
-            }
-          }
-        }
-      },
-      {
-        extend: 'pdf',
-        text: '📕 PDF',
-        className: 'buttons-pdf',
-        filename: 'proyeksi_line_nuget',
-        orientation: 'landscape',
-        pageSize: 'A4'
-      },
-      {
-        extend: 'print',
-        text: '🖨 Print',
-        className: 'buttons-print'
-      }
-    ],
-    scrollX: true,
-    scrollY: '500px',
-    scrollCollapse: true,
-    paging: true,
-    pageLength: 25,
-    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+}
+
+function renderGrid() {
+  // Render Grid.js
+  grid = new gridjs.Grid({
+    columns: headers.map(h => ({ name: h, sort: false })),
+    data: currentData,
+    pagination: { limit: 25, summary: true },
+    search: true,
+    sort: false,
+    resizable: true,
+    autoWidth: true,
     language: {
-      search: "🔍 Pencarian:",
-      lengthMenu: "Tampilkan _MENU_ data per halaman",
-      info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-      infoEmpty: "Menampilkan 0 sampai 0 dari 0 data",
-      infoFiltered: "(difilter dari _MAX_ total data)",
-      paginate: {
-        first: "Pertama",
-        last: "Terakhir",
-        next: "Selanjutnya",
-        previous: "Sebelumnya"
+      search: {
+        placeholder: '🔍 Cari data...'
       },
-      zeroRecords: "Tidak ada data yang ditemukan",
-      emptyTable: "Tidak ada data tersedia"
-    },
-    columnDefs: [
-      {
-        targets: [0, 1], // Kolom A dan B (index 0 dan 1)
-        type: 'date-dd-mm-yyyy' // Gunakan sorting khusus untuk tanggal DD/MM/YYYY
+      pagination: {
+        previous: 'Sebelumnya',
+        next: 'Selanjutnya',
+        showing: 'Menampilkan',
+        results: () => 'data',
+        of: 'dari',
+        to: 'sampai'
       }
-    ],
-    order: [[0, 'asc']], // Sort kolom pertama (tanggal) secara ascending
-    select: true
-  });
+    }
+  }).render(document.getElementById("gridTable"));
+
+  setTimeout(applyHeaderTooltip, 1000);
 }
 
 function applyFilters(){
-  if (!dataTable) return;
+  const fBMulai = document.getElementById("filterBMulai").value;
+  const fBSelesai = document.getElementById("filterBSelesai").value;
+  const fG = document.getElementById("filterG").value;
   
-  let fB = document.getElementById("filterB").value;
-  let fG = document.getElementById("filterG").value;
+  const tglMulai = convertFromDateInputFormat(fBMulai);
+  const tglSelesai = convertFromDateInputFormat(fBSelesai);
   
-  // Get column indices for B and G (assuming B=1, G=6 in 0-based index)
-  let colB = 1;
-  let colG = 6;
+  console.log('Filter - Tanggal Mulai:', tglMulai);
+  console.log('Filter - Tanggal Selesai:', tglSelesai);
+  console.log('Filter - Nama Sampel:', fG);
   
-  // Apply filters
-  dataTable
-    .column(colB).search(fB)
-    .column(colG).search(fG)
-    .draw();
-}
-
-function fillFilters(rows){
-  if (rows.length === 0) return;
-  
-  // Fill filter for column B (index 1) - Tanggal OKP
-  let sB = document.getElementById("filterB");
-  sB.innerHTML = "<option value=''>-- Semua Tanggal OKP --</option>";
-  let valsB = [...new Set(rows.slice(1).map(r => r[1] ? formatDateFromGoogleSheets(r[1]) : ''))].filter(v => v);
-  
-  // Sort tanggal dengan benar (DD/MM/YYYY)
-  valsB.sort((a, b) => {
-    // Konversi DD/MM/YYYY ke YYYYMMDD untuk perbandingan
-    const dateA = a.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    const dateB = b.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    
-    if (dateA && dateB) {
-      const numA = parseInt(dateA[3] + dateA[2] + dateA[1]); // YYYYMMDD
-      const numB = parseInt(dateB[3] + dateB[2] + dateB[1]); // YYYYMMDD
-      return numA - numB; // Ascending
+  currentData = allRows.filter(row => {
+    // Filter tanggal range
+    let cocokTanggal = true;
+    if (tglMulai && row[1]) {
+      cocokTanggal = cocokTanggal && compareDates(row[1], tglMulai, '>=');
+    }
+    if (tglSelesai && row[1]) {
+      cocokTanggal = cocokTanggal && compareDates(row[1], tglSelesai, '<=');
     }
     
-    return a.localeCompare(b); // Fallback untuk string biasa
+    // Filter nama sampel
+    const cocokSampel = !fG || row[6] === fG;
+    
+    return cocokTanggal && cocokSampel;
   });
   
-  valsB.forEach(v => {
-    let o = document.createElement("option");
-    o.value = v;
-    o.textContent = v;
-    sB.appendChild(o);
+  console.log('Data setelah filter:', currentData.length, 'rows');
+  console.log('Sample filtered dates:', currentData.slice(0, 5).map(r => r[1]));
+  
+  // Update grid
+  grid.updateConfig({ data: currentData }).forceRender().then(() => {
+    applyHeaderTooltip();
   });
+  
+  // Update chart dengan data terfilter
+  updateChart();
+}
+
+function fillFilters(){
+  if (allRows.length === 0) return;
   
   // Fill filter for column G (index 6) - Nama Sampel
   let sG = document.getElementById("filterG");
-  sG.innerHTML = "<option value=''>-- Semua Nama Sampel --</option>";
-  let valsG = [...new Set(rows.slice(1).map(r => r[6]))].filter(v => v);
-  valsG.sort(); // Sort alfabetis untuk nama sampel
+  sG.innerHTML = "<option value=''>Semua</option>";
+  let valsG = [...new Set(allRows.map(r => r[6]))].filter(v => v);
+  valsG.sort();
   valsG.forEach(v => {
     let o = document.createElement("option");
     o.value = v;
@@ -715,13 +647,139 @@ function fillFilters(rows){
   });
 }
 
+function updateChart() {
+  // Pastikan chart container sudah ada
+  const chartCanvas = document.getElementById('lineChart');
+  if (!chartCanvas) {
+    console.error('Chart canvas not found');
+    return;
+  }
+  
+  // Cek apakah ada data
+  if (!currentData || currentData.length === 0) {
+    console.warn('No data available for chart');
+    // Destroy chart jika tidak ada data
+    if (myChart) {
+      myChart.destroy();
+      myChart = null;
+    }
+    return;
+  }
+  
+  // Ambil data dari kolom K (index 10), L (index 11), M (index 12)
+  // GUNAKAN currentData yang sudah terfilter, bukan allRows
+  const labels = currentData.map(row => row[1] || ''); // Tanggal OKP sebagai label
+  const dataK = currentData.map(row => {
+    const val = parseFloat(row[10]);
+    return isNaN(val) ? 0 : val;
+  });
+  const dataL = currentData.map(row => {
+    const val = parseFloat(row[11]);
+    return isNaN(val) ? 0 : val;
+  });
+  const dataM = currentData.map(row => {
+    const val = parseFloat(row[12]);
+    return isNaN(val) ? 0 : val;
+  });
+  
+  console.log('Chart Update - Data Length:', currentData.length);
+  console.log('Chart Update - Labels:', labels.slice(0, 5));
+  console.log('Chart Update - Sample K:', dataK.slice(0, 5));
+  console.log('Chart Update - Sample L:', dataL.slice(0, 5));
+  console.log('Chart Update - Sample M:', dataM.slice(0, 5));
+  
+  const ctx = chartCanvas.getContext('2d');
+  
+  // Destroy chart lama jika ada
+  if (myChart) {
+    myChart.destroy();
+    myChart = null;
+  }
+  
+  // Buat chart baru dengan data yang sudah difilter
+  myChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: headers[10] || 'Kolom K',
+          data: dataK,
+          borderColor: 'rgb(255, 99, 132)',
+          backgroundColor: 'rgba(255, 99, 132, 0.1)',
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false
+        },
+        {
+          label: headers[11] || 'Kolom L',
+          data: dataL,
+          borderColor: 'rgb(54, 162, 235)',
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false
+        },
+        {
+          label: headers[12] || 'Kolom M',
+          data: dataM,
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.1)',
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+        },
+        title: {
+          display: false
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          }
+        },
+        x: {
+          grid: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
+      }
+    }
+  });
+  
+  console.log('Chart created successfully');
+}
+
 function updateDateTime() {
   const now = new Date();
   
-  // Indonesian day names
   const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  
-  // Indonesian month names
   const monthNames = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
@@ -732,12 +790,11 @@ function updateDateTime() {
   const month = monthNames[now.getMonth()];
   const year = now.getFullYear();
   
-  // Format time with leading zeros
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const seconds = String(now.getSeconds()).padStart(2, '0');
   
-  const dateTimeString = `📅 ${dayName}, ${day} ${month} ${year} |  ${hours}:${minutes}:${seconds}`;
+  const dateTimeString = `📅 ${dayName}, ${day} ${month} ${year} | ⏰ ${hours}:${minutes}:${seconds}`;
   
   document.getElementById('dateTimeDisplay').innerHTML = dateTimeString;
 }
@@ -748,14 +805,97 @@ function setStatus(st, t){
   document.getElementById("statusText").textContent = t; 
 }
 
-// Initialize page when DOM is loaded
-$(document).ready(function() {
-  // Update date time immediately and then every second
-  updateDateTime();
-  setInterval(updateDateTime, 1000);
+// Toggle chart visibility
+document.getElementById("toggleChartBtn").addEventListener("click", () => {
+  const chartContainer = document.getElementById("chartContainer");
+  const btn = document.getElementById("toggleChartBtn");
   
-  loadSheet();
+  if (chartContainer.classList.contains("show")) {
+    chartContainer.classList.remove("show");
+    btn.textContent = "📊 Tampilkan Chart";
+  } else {
+    chartContainer.classList.add("show");
+    btn.textContent = "📊 Sembunyikan Chart";
+    // Update chart saat ditampilkan dengan data currentData yang terfilter
+    updateChart();
+    setTimeout(() => {
+      if (myChart) {
+        myChart.resize();
+      }
+    }, 100);
+  }
 });
+
+// Event listeners untuk filter
+document.getElementById("filterBMulai").addEventListener("change", applyFilters);
+document.getElementById("filterBSelesai").addEventListener("change", applyFilters);
+document.getElementById("filterG").addEventListener("change", applyFilters);
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  document.getElementById("filterBMulai").value = '';
+  document.getElementById("filterBSelesai").value = '';
+  document.getElementById("filterG").value = '';
+  currentData = [...allRows];
+  grid.updateConfig({ data: allRows }).forceRender().then(() => {
+    applyHeaderTooltip();
+  });
+  updateChart();
+});
+
+// Export Excel
+document.getElementById('excelBtn').addEventListener('click', () => {
+  const tableData = [headers, ...currentData];
+  const worksheet = XLSX.utils.aoa_to_sheet(tableData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "ProyeksiLineNuget");
+  XLSX.writeFile(workbook, "Proyeksi_Line_Nuget.xlsx");
+});
+
+// Print
+document.getElementById('printBtn').addEventListener('click', () => {
+  const visibleRows = document.querySelectorAll(".gridjs-tbody tr");
+  if (visibleRows.length === 0) {
+    alert("Tidak ada data yang ditampilkan untuk dicetak.");
+    return;
+  }
+
+  const tableHtml = `
+    <table border="1" cellspacing="0" cellpadding="5">
+      <thead>
+        <tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>
+      </thead>
+      <tbody>
+        ${Array.from(visibleRows).map(tr => `<tr>${tr.innerHTML}</tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+
+  const newWin = window.open("");
+  newWin.document.write(`
+    <html>
+      <head>
+        <title>Cetak Proyeksi Line Nuget</title>
+        <style>
+          table {border-collapse: collapse; width: 100%; font-size: 12px;}
+          th, td {border: 1px solid #999; padding: 6px; text-align: left;}
+          th {background: #1565c0; color: white;}
+          h3 {text-align: center;}
+        </style>
+      </head>
+      <body>
+        <h3>Proyeksi Line Nuget - Data Terfilter (Halaman Aktif)</h3>
+        ${tableHtml}
+        <script>window.print();<\/script>
+      </body>
+    </html>
+  `);
+  newWin.document.close();
+});
+
+// Initialize
+updateDateTime();
+setInterval(updateDateTime, 1000);
+loadSheet();
 </script>
 </body>
 </html>
