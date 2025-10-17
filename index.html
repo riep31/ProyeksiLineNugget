@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login Proyeksi Line Nugget</title>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #4fc3f7, #81c784);
+      overflow: hidden;
+      animation: bgmove 10s infinite alternate ease-in-out;
+    }
+
+    @keyframes bgmove {
+      0% { background: linear-gradient(135deg, #4fc3f7, #81c784); }
+      100% { background: linear-gradient(135deg, #81c784, #4fc3f7); }
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px 35px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 340px;
+      text-align: center;
+      animation: slideUp 1s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    h1 {
+      color: #1565c0;
+      margin-bottom: 8px;
+      font-size: 24px;
+      animation: fadeIn 1.2s ease-in;
+    }
+
+    h3 {
+      color: #555;
+      font-size: 13px;
+      margin-bottom: 25px;
+      font-weight: 400;
+      animation: fadeIn 1.6s ease-in;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .input-field:focus {
+      border-color: #1a73e8;
+      box-shadow: 0 0 8px rgba(26,115,232,0.3);
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      background: #1565c0;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0d47a1;
+    }
+
+    .logo {
+      width: 85px;
+      height: 85px;
+      margin-bottom: 15px;
+      animation: spin 5s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .remember {
+      text-align: left;
+      font-size: 13px;
+      margin: 5px 0 15px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="https://cdn-icons-png.flaticon.com/512/906/906334.png" class="logo" alt="logo" />
+    <h1>Selamat Datang 👋</h1>
+    <h3>Silakan masuk untuk melanjutkan ke Proyeksi Line Nugget</h3>
+
+    <input type="text" id="username" class="input-field" placeholder="Username" />
+    <input type="password" id="password" class="input-field" placeholder="Password" />
+    <div class="remember">
+      <input type="checkbox" id="rememberMe"> <label for="rememberMe">Ingat saya</label>
+    </div>
+    <button id="loginBtn">Masuk</button>
+  </div>
+
+  <script>
+    const apiKey = "AIzaSyD3nhZyvd7npQw6n9mPXxOA6svJdo_JQis"; // 🔹 Ganti dengan API key kamu
+    const spreadsheetId = "Y1ngP7PTE4mNKtkcTQU5sRYswdYmdC401M4ioxxkt-Hxw"; // 🔹 Ganti dengan ID Sheet kamu
+    const sheetName = "LOGINLINE"; // 🔹 Nama sheet tempat username & password disimpan
+    const redirectURL = "https://riep31.github.io/ProyeksiLineNugget/linenuget.html";
+
+    // Cek apakah user sudah login sebelumnya
+    if (localStorage.getItem("loggedUser")) {
+      window.location.href = redirectURL;
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const remember = document.getElementById("rememberMe").checked;
+
+      if (!username || !password) {
+        swal("Perhatian", "Username dan password harus diisi!", "warning");
+        return;
+      }
+
+      try {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}?key=${apiKey}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const rows = data.values.slice(1); // baris pertama header
+
+        const user = rows.find(row => row[0] === username && row[1] === password);
+
+        if (user) {
+          swal({
+            title: "Berhasil Login!",
+            text: `Selamat datang, ${username}!`,
+            icon: "success",
+            button: false,
+          });
+          setTimeout(() => {
+            if (remember) localStorage.setItem("loggedUser", username);
+            window.location.href = redirectURL;
+          }, 1200);
+        } else {
+          swal("Gagal", "Username atau password salah.", "error");
+        }
+
+      } catch (error) {
+        console.error(error);
+        swal("Error", "Gagal menghubungi server. Periksa koneksi atau API key.", "error");
+      }
+    });
+  </script>
+</body>
+</html>
