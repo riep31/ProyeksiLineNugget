@@ -204,6 +204,36 @@
       background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
     }
 
+    /* Chart buttons styling */
+    .chart-button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .chart-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .chart-button:active {
+      transform: translateY(0);
+    }
+
+    #saveChartBtn {
+      background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%);
+    }
+
+    #printChartBtn {
+      background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+    }
+
     /* ===========================
        CHART CONTAINER
        =========================== */
@@ -220,6 +250,23 @@
 
     .chart-container.show {
       display: block;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .chart-header h3 {
+      margin: 0;
+      color: #2c3e50;
+    }
+
+    .chart-buttons {
+      display: flex;
+      gap: 10px;
     }
 
     .chart-wrapper {
@@ -241,7 +288,7 @@
       border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
-    /* Grid.js Custom Styling - sama seperti Tabel 1 */
+    /* Grid.js Custom Styling */
     .gridjs-container {
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
       border-radius: 6px;
@@ -361,6 +408,17 @@
       .logo-text strong {
         font-size: 14px;
       }
+
+      .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .chart-buttons {
+        width: 100%;
+        justify-content: flex-start;
+      }
     }
   </style>
 </head>
@@ -384,7 +442,13 @@
 
     <!-- Chart Container -->
     <div class="chart-container" id="chartContainer">
-      <h3 style="margin-top: 0; color: #2c3e50; text-align: center;">📈 Line Chart - Data Kolom K, L, M</h3>
+      <div class="chart-header">
+        <h3 id="chartTitle">📈 Line Chart - Semua Data</h3>
+        <div class="chart-buttons">
+          <button id="saveChartBtn" class="chart-button">💾 Save Chart</button>
+          <button id="printChartBtn" class="chart-button">🖨️ Print Chart</button>
+        </div>
+      </div>
       <div class="chart-wrapper">
         <canvas id="lineChart"></canvas>
       </div>
@@ -554,7 +618,6 @@ async function loadSheet(){
     
     renderGrid();
     fillFilters();
-    // JANGAN update chart di sini, biarkan kosong sampai user klik tombol chart
     
     setStatus("connected","Connected");
   } catch(error) {
@@ -620,7 +683,6 @@ function applyFilters(){
   });
   
   console.log('Data setelah filter:', currentData.length, 'rows');
-  console.log('Sample filtered dates:', currentData.slice(0, 5).map(r => r[1]));
   
   // Update grid
   grid.updateConfig({ data: currentData }).forceRender().then(() => {
@@ -666,9 +728,29 @@ function updateChart() {
     return;
   }
   
-  // Ambil data dari kolom K (index 10), L (index 11), M (index 12)
-  // GUNAKAN currentData yang sudah terfilter, bukan allRows
+  // Update judul chart berdasarkan filter nama sampel
+  const filterG = document.getElementById("filterG").value;
+  const chartTitle = document.getElementById("chartTitle");
+  if (filterG) {
+    chartTitle.textContent = `📈 Line Chart - ${filterG}`;
+  } else {
+    chartTitle.textContent = '📈 Line Chart - Semua Data';
+  }
+  
+  // Ambil data dari kolom H (index 7), I (index 8), W (index 22), K (index 10), L (index 11), M (index 12)
   const labels = currentData.map(row => row[1] || ''); // Tanggal OKP sebagai label
+  const dataH = currentData.map(row => {
+    const val = parseFloat(row[7]);
+    return isNaN(val) ? 0 : val;
+  });
+  const dataI = currentData.map(row => {
+    const val = parseFloat(row[8]);
+    return isNaN(val) ? 0 : val;
+  });
+  const dataW = currentData.map(row => {
+    const val = parseFloat(row[22]);
+    return isNaN(val) ? 0 : val;
+  });
   const dataK = currentData.map(row => {
     const val = parseFloat(row[10]);
     return isNaN(val) ? 0 : val;
@@ -683,10 +765,6 @@ function updateChart() {
   });
   
   console.log('Chart Update - Data Length:', currentData.length);
-  console.log('Chart Update - Labels:', labels.slice(0, 5));
-  console.log('Chart Update - Sample K:', dataK.slice(0, 5));
-  console.log('Chart Update - Sample L:', dataL.slice(0, 5));
-  console.log('Chart Update - Sample M:', dataM.slice(0, 5));
   
   const ctx = chartCanvas.getContext('2d');
   
@@ -702,6 +780,39 @@ function updateChart() {
     data: {
       labels: labels,
       datasets: [
+        {
+          label: headers[7] || 'Kolom H',
+          data: dataH,
+          borderColor: 'rgb(255, 159, 64)',
+          backgroundColor: 'rgba(255, 159, 64, 0.1)',
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false
+        },
+        {
+          label: headers[8] || 'Kolom I',
+          data: dataI,
+          borderColor: 'rgb(153, 102, 255)',
+          backgroundColor: 'rgba(153, 102, 255, 0.1)',
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false
+        },
+        {
+          label: headers[22] || 'Kolom W',
+          data: dataW,
+          borderColor: 'rgb(255, 205, 86)',
+          backgroundColor: 'rgba(255, 205, 86, 0.1)',
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: false
+        },
         {
           label: headers[10] || 'Kolom K',
           data: dataK,
@@ -851,7 +962,7 @@ document.getElementById('excelBtn').addEventListener('click', () => {
   XLSX.writeFile(workbook, "Proyeksi_Line_Nuget.xlsx");
 });
 
-// Print
+// Print Table
 document.getElementById('printBtn').addEventListener('click', () => {
   const visibleRows = document.querySelectorAll(".gridjs-tbody tr");
   if (visibleRows.length === 0) {
@@ -890,6 +1001,82 @@ document.getElementById('printBtn').addEventListener('click', () => {
     </html>
   `);
   newWin.document.close();
+});
+
+// Save Chart as Image
+document.getElementById('saveChartBtn').addEventListener('click', () => {
+  if (!myChart) {
+    alert("Chart belum ditampilkan. Silakan tampilkan chart terlebih dahulu.");
+    return;
+  }
+  
+  const canvas = document.getElementById('lineChart');
+  const url = canvas.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.download = 'Line_Chart_Proyeksi_Line_Nuget.png';
+  link.href = url;
+  link.click();
+});
+
+// Print Chart
+document.getElementById('printChartBtn').addEventListener('click', () => {
+  if (!myChart) {
+    alert("Chart belum ditampilkan. Silakan tampilkan chart terlebih dahulu.");
+    return;
+  }
+  
+  const chartTitle = document.getElementById('chartTitle').textContent;
+  const canvas = document.getElementById('lineChart');
+  const imgData = canvas.toDataURL('image/png');
+  
+  const printWindow = window.open('', '', 'width=1200,height=800');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Line Chart</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 20px;
+            text-align: center;
+          }
+          h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+          }
+          img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+          }
+          .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #7f8c8d;
+          }
+          @media print {
+            body { margin: 0; }
+            img { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <h2>${chartTitle}</h2>
+        <img src="${imgData}" alt="Line Chart">
+        <div class="footer">
+          <p>Proyeksi Line Nuget - Dicetak pada: ${new Date().toLocaleString('id-ID')}</p>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        <\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 });
 
 // Initialize
