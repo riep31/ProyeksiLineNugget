@@ -495,7 +495,7 @@ let headers = [];
 let myChart = null;
 
 // Auto Logout Configuration
-let inactivityTime = 15 * 60 * 1000; // 15 menit dalam milidetik
+let inactivityTime = 5 * 60 * 1000; // 15 menit dalam milidetik
 let inactivityTimer;
 const loginPageUrl = 'https://riep31.github.io/ProyeksiLineNugget/index.html';
 
@@ -504,8 +504,10 @@ function resetInactivityTimer() {
   clearTimeout(inactivityTimer);
   inactivityTimer = setTimeout(() => {
     // Logout setelah 15 menit tidak ada aktivitas
-    alert('Sesi Anda telah berakhir karena tidak ada aktivitas selama 15 menit. Anda akan diarahkan ke halaman login.');
-    window.location.href = loginPageUrl;
+    alert('Sesi Anda telah berakhir karena tidak ada aktivitas selama 5 menit. Anda akan diarahkan ke halaman login.');
+    
+    // Redirect ke halaman login
+    window.location.replace(loginPageUrl);
   }, inactivityTime);
 }
 
@@ -995,7 +997,7 @@ function updateChart() {
                 const position = element.tooltipPosition();
                 
                 // Offset vertikal ke bawah untuk setiap dataset agar tidak tumpang tindih dengan legend
-                const offsetY = 5 + (i * 8);
+                const offsetY = 10 + (i * 12);
                 ctx.fillText(batchText, position.x, position.y + offsetY);
               }
             });
