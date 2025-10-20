@@ -465,8 +465,8 @@
         <input type="date" id="filterBSelesai">
 
         <label for="filterG">Nama Sampel:</label>
-        <select id="filterG">
-          <option value="">Semua</option>
+        <select id="filterG" disabled>
+          <option value="">Pilih tanggal terlebih dahulu</option>
         </select>
 
         <!-- Action Buttons -->
@@ -693,13 +693,54 @@ function applyFilters(){
   updateChart();
 }
 
+// Event listener untuk filter tanggal - update dropdown Nama Sampel
+function handleDateFilterChange() {
+  updateNamaSampelFilter();
+  applyFilters();
+}
+
 function fillFilters(){
   if (allRows.length === 0) return;
   
   // Fill filter for column G (index 6) - Nama Sampel
-  let sG = document.getElementById("filterG");
+  // Initial state - akan diisi setelah filter tanggal dipilih
+}
+
+// Fungsi untuk update dropdown Nama Sampel berdasarkan filter tanggal
+function updateNamaSampelFilter() {
+  const fBMulai = document.getElementById("filterBMulai").value;
+  const fBSelesai = document.getElementById("filterBSelesai").value;
+  const sG = document.getElementById("filterG");
+  
+  // Cek apakah kedua tanggal sudah diisi
+  if (!fBMulai || !fBSelesai) {
+    // Jika belum lengkap, disable dropdown dan reset
+    sG.disabled = true;
+    sG.innerHTML = "<option value=''>Pilih tanggal terlebih dahulu</option>";
+    return;
+  }
+  
+  // Jika sudah lengkap, enable dropdown dan filter data
+  sG.disabled = false;
+  
+  const tglMulai = convertFromDateInputFormat(fBMulai);
+  const tglSelesai = convertFromDateInputFormat(fBSelesai);
+  
+  // Filter data berdasarkan tanggal
+  const filteredByDate = allRows.filter(row => {
+    let cocokTanggal = true;
+    if (tglMulai && row[1]) {
+      cocokTanggal = cocokTanggal && compareDates(row[1], tglMulai, '>=');
+    }
+    if (tglSelesai && row[1]) {
+      cocokTanggal = cocokTanggal && compareDates(row[1], tglSelesai, '<=');
+    }
+    return cocokTanggal;
+  });
+  
+  // Ambil unique values dari kolom G (Nama Sampel) dari data yang sudah difilter
   sG.innerHTML = "<option value=''>Semua</option>";
-  let valsG = [...new Set(allRows.map(r => r[6]))].filter(v => v);
+  let valsG = [...new Set(filteredByDate.map(r => r[6]))].filter(v => v);
   valsG.sort();
   valsG.forEach(v => {
     let o = document.createElement("option");
@@ -707,6 +748,8 @@ function fillFilters(){
     o.textContent = v;
     sG.appendChild(o);
   });
+  
+  console.log('Nama Sampel tersedia:', valsG.length, 'item');
 }
 
 function updateChart() {
@@ -739,6 +782,13 @@ function updateChart() {
   
   // Ambil data dari kolom H (index 7), I (index 8), W (index 22), K (index 10), L (index 11), M (index 12)
   const labels = currentData.map(row => row[1] || ''); // Tanggal OKP sebagai label
+  
+  // BAGIAN BARU: Ambil kode batch dari kolom F (index 5)
+  const batchLabels = currentData.map(row => {
+    const batchNo = row[5] || ''; // Kolom F (index 5) - No Batch
+    return batchNo ? `BCH ${batchNo}` : '';
+  });
+  
   const dataH = currentData.map(row => {
     const val = parseFloat(row[7]);
     return isNaN(val) ? 0 : val;
@@ -861,7 +911,12 @@ function updateChart() {
         },
         tooltip: {
           mode: 'index',
-          intersect: false
+          intersect: false,
+          callbacks: {
+            afterLabel: function(context) {
+              return 'Batch: ' + batchLabels[context.dataIndex];
+            }
+          }
         }
       },
       scales: {
@@ -881,7 +936,42 @@ function updateChart() {
           }
         }
       }
-    }
+    },
+    plugins: [{
+      afterDatasetsDraw: function(chart) {
+        const ctx = chart.ctx;
+        
+        // Array warna untuk setiap dataset agar label sesuai dengan warna garis
+        const colors = [
+          'rgb(255, 159, 64)',  // Dataset 0 - H
+          'rgb(153, 102, 255)', // Dataset 1 - I
+          'rgb(255, 205, 86)',  // Dataset 2 - W
+          'rgb(255, 99, 132)',  // Dataset 3 - K
+          'rgb(54, 162, 235)',  // Dataset 4 - L
+          'rgb(75, 192, 192)'   // Dataset 5 - M
+        ];
+        
+        chart.data.datasets.forEach((dataset, i) => {
+          const meta = chart.getDatasetMeta(i);
+          if (!meta.hidden) {
+            meta.data.forEach((element, index) => {
+              const batchText = batchLabels[index];
+              if (batchText) {
+                ctx.fillStyle = colors[i] || 'rgb(0, 0, 0)';
+                ctx.font = 'bold 9px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top'; // Ubah ke 'top' agar label di bawah titik
+                const position = element.tooltipPosition();
+                
+                // Offset vertikal ke bawah untuk setiap dataset agar tidak tumpang tindih dengan legend
+                const offsetY = 5 + (i * 8);
+                ctx.fillText(batchText, position.x, position.y + offsetY);
+              }
+            });
+          }
+        });
+      }
+    }]
   });
   
   console.log('Chart created successfully');
@@ -938,14 +1028,16 @@ document.getElementById("toggleChartBtn").addEventListener("click", () => {
 });
 
 // Event listeners untuk filter
-document.getElementById("filterBMulai").addEventListener("change", applyFilters);
-document.getElementById("filterBSelesai").addEventListener("change", applyFilters);
+document.getElementById("filterBMulai").addEventListener("change", handleDateFilterChange);
+document.getElementById("filterBSelesai").addEventListener("change", handleDateFilterChange);
 document.getElementById("filterG").addEventListener("change", applyFilters);
 
 document.getElementById("resetBtn").addEventListener("click", () => {
   document.getElementById("filterBMulai").value = '';
   document.getElementById("filterBSelesai").value = '';
   document.getElementById("filterG").value = '';
+  document.getElementById("filterG").disabled = true;
+  document.getElementById("filterG").innerHTML = "<option value=''>Pilih tanggal terlebih dahulu</option>";
   currentData = [...allRows];
   grid.updateConfig({ data: allRows }).forceRender().then(() => {
     applyHeaderTooltip();
