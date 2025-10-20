@@ -494,6 +494,37 @@ let grid;
 let headers = [];
 let myChart = null;
 
+// Auto Logout Configuration
+let inactivityTime = 15 * 60 * 1000; // 15 menit dalam milidetik
+let inactivityTimer;
+const loginPageUrl = 'https://riep31.github.io/ProyeksiLineNugget/index.html';
+
+// Fungsi untuk reset timer inactivity
+function resetInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    // Logout setelah 15 menit tidak ada aktivitas
+    alert('Sesi Anda telah berakhir karena tidak ada aktivitas selama 15 menit. Anda akan diarahkan ke halaman login.');
+    window.location.href = loginPageUrl;
+  }, inactivityTime);
+}
+
+// Event listeners untuk mendeteksi aktivitas user
+function setupInactivityDetection() {
+  // Reset timer pada aktivitas mouse dan keyboard
+  const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+  
+  events.forEach(event => {
+    document.addEventListener(event, resetInactivityTimer, true);
+  });
+  
+  // Start timer pertama kali
+  resetInactivityTimer();
+}
+
+// Inisialisasi deteksi inactivity saat halaman dimuat
+setupInactivityDetection();
+
 // Google Sheets API function to fetch data
 async function fetchSheetData(sheetNameParam) {
   if (!apiKey || !spreadsheetId) {
